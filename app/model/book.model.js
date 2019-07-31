@@ -1,4 +1,6 @@
 const mongoose = require("mongoose");
+const shortId = require("shortid");
+
 let schema = mongoose.Schema;
 
 let bookSchema = new schema({
@@ -14,9 +16,14 @@ let bookSchema = new schema({
         type: String,
         required: true
     },
-    bookId: {
+    category: {
+        tpye: String,
+        required: true,
+        enum: ["science", "adventure", "maths"]
+    },
+    id: {
         type: String,
-        required: true
+        default: shortId.generate
     },
     language: {
         type: String,
@@ -30,14 +37,19 @@ let bookSchema = new schema({
         type: String,
         required: true
     },
-    numberOfCopies: {
+    totalNumberOfCopies: {
         type: Number,
         required: true
     },
-    posted: {
-        type: Boolean,
-        default: false
+    copiesIssuedBy: [String],
+    librarianId: {
+        type: String,
+        required: true
     }
+    // posted: {
+    //     type: Boolean,
+    //     default: false
+    // }
 });
 
 module.exports = mongoose.model("Book", bookSchema, "book");

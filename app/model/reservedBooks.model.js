@@ -3,36 +3,27 @@ const shortId = require("shortid");
 
 let schema = mongoose.Schema;
 
-let adminSchema = new schema({
-    type: {
-        type: String,
-        default: "admin"
-    },
-    name: {
+let reservedBookSchema = new schema({
+    memberId: {
         type: String,
         required: true
     },
-    email: {
-        type: String,
-        required: true,
-        unique: true
-    },
-    password: {
+    bookId: {
         type: String,
         required: true
     },
-    joinDate: {
+    librarianId: {
+        type: String,
+        required: true
+    },
+    date: {
         type: Date,
         required: true
     },
-    active: {
-        type: Boolean,
-        default: false
-    },
-    id:{
+    id: {
         type: String,
         default: shortId.generate
     }
 });
 
-module.exports = mongoose.model("Admin", adminSchema, "admin");
+module.exports = mongoose.model("IssuedBook", reservedBookSchema, "issuedBook");

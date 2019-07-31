@@ -1,28 +1,43 @@
 const mongoose = require("mongoose");
 let schema = mongoose.Schema;
 
-let memberSchema = new schema({
-    type: {
-        type: String,
-        default: "member"
-    },
+let MemberSchema = new schema({
+    // type: {
+    //     type: String,
+    //     required: true
+    // },
     name: {
         type: String,
         required: true
     },
-    dateOfMemberShip: Date,
-    totalBooksCheckedOut: {
-        type: Number,
-        default: 0
+    email: {
+        type: String,
+        required: true,
+        unique: true
     },
     password: {
         type: String,
         required: true
     },
-    active: {
-        type: Boolean,
-        default: false
+    joinDate: {
+        tpye: Date,
+        required: true
+    },
+    booksIssuedId: [String],
+    id:{
+        type: String,
+        required: true
     }
+    // dateOfMemberShip: Date,
+    // totalBooksCheckedOut: {
+    //     type: Number,
+    //     default: 0
+    // },
+    
+    // active: {
+    //     type: Boolean,
+    //     default: false
+    // }
 });
 
-module.exports = mongoose.model("Member", memberSchema, "member");
+module.exports = mongoose.model("User", MemberSchema, "user");
