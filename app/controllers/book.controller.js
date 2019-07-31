@@ -1,8 +1,10 @@
 let mongoose = require("mongoose");
 let shortId = require("shortid");
+let async = require("async");
 
 let Book = mongoose.model("Book");
-let User = mongoose.model("User");
+let Member = mongoose.model("Member");
+let Librarian = mongoose.model("Librarian");
 let IssuedBook = mongoose.model("IssuedBook");
 let ReservedBook = mongoose.model("ReservedBook");
 
@@ -311,97 +313,78 @@ module.exports.postBook = (req, res, next) => {
 
 module.exports.issueBook = (req, res, next) => {
     let body = req.body;
-    let issuedBookId = shortId.generate;
     if (body && body.memberId && body.bookId && body.librarianId) {
-        Book
-            .findOne({ id: body.bookid })
-            .exec((error, response) => {
+        Member
+            .findOne({ id: body.memberId }, { _id: 0, booksIssued: 1 })
+            .exec((error, response2) => {
                 if (error) {
-                    console.log("Error while searching a book");
+                    console.log("Error while searching for one member");
                     res
                         .status(404)
                         .send({
                             auth: false,
-                            message: "Error while searching a book",
+                            message: "Error while searching for one member",
                             error: error
                         });
                 } else {
-                    if (response.totalNumberOfCopies > copiesIssuedBy.length) {
-                        User
-                            .find({ id: {$in: [body.memberId, body.]}  })
-                            .exec((error2, response2) => {
-                                if (error2) {
-                                    console.log("Error while searching for user data");
-                                    res
-                                        .status(404)
-                                        .send({
-                                            auth: false,
-                                            message: "Error while searching for user data",
-                                            error: error2
-                                        });
-                                } else {
-                                    response3.bookIssuedId.push(issuedBookId);
-                                    res
-                                        .status(200)
-                                        .send({
-                                            auth: true,
-                                            message: "Book issued successfully",
-                                            response: response3
-                                        });
+                    if (response2.booksIssued.length < 5) {
+                        async.parallel([
+                            function (callback) {
+                                Member
+                                    .updateOne({ id: body.memberId }, { booksIssued: { $push: body.bookId } })
+                                    .exec((error, response) => {
+                                        if (error) {
+                                            callback(error);
+                                        } else {
+                                            callback(null, response);
+                                        }
+                                    });
+                            }, function (callback) {
+                                let dueDate = new Date();
+                                let issuedBookInfo = {
+                                    bookId: body.bookId,
+                                    memberId: body.memberId,
+                                    issuingDate: Date.now(),
+                                    dueDate: dueDate.setDate(dueDate.getDate() + 10)        // Defining due date
                                 }
+                                Librarian
+                                    .updateOne({ id: body.memberId }, { issuedBooksInfo: { $push: issuedBookInfo } })
+                                    .exec((error, response) => {
+                                        if (error) {
+                                            callback(error);
+                                        } else {
+                                            callback(null, response);
+                                        }
+                                    });
+                            }
+                        ], function (error, results) {
+                            if (error) {
+                                res
+                                    .status(404)
+                                    .send({
+                                        auth: false,
+                                        error: error
+                                    });
+                            } else {
+                                res
+                                    .status(200)
+                                    .send({
+                                        auth: true,
+                                        message: "Book issued successfully",
+                                        response: results
+                                    });
+                            }
+                        });
+
+                    } else {
+                        console.log("Limit of issuing books crossed");
+                        res
+                            .status(404)
+                            .send({
+                                auth: false,
+                                message: "Limit of issuing books crossed"
                             });
-                    });
-    } else {
-        console.log("Copies not left for the book");
-        res
-            .status(404)
-            .send({
-                auth: false,
-                message: "Copies not left for the book",
-            });
-    }
-}
-            });
-    } else {
-    console.log("Parameters are missing");
-    res
-        .staus(404)
-        .send({
-            auht: false,
-            message: "Parameters are missing"
-        });
-}
-}
-
-module.exports.reserveBook = (req, res, next) => {
-    let body = req.body;
-    if (body && body.memberId && body.bookId && body.librarianId) {
-        let newReservedBook = new ReservedBook({
-            memberId: body.memberId,
-            bookId: body.bookId,
-            date: Date.now(),
-            librarianId: body.librarianId
-        });
-
-        newReservedBook
-            .save((error, response) => {
-                if (error) {
-                    console.log("Error while reserving book");
-                    res
-                        .status(404)
-                        .send({
-                            auth: false,
-                            message: "Error while reserving book",
-                            error: error
-                        });
-                } else {
-                    res
-                        .status(200)
-                        .send({
-                            auth: true,
-                            message: "Book reserved successfully",
-                            response: response
-                        });
+                    }
                 }
             });
     } else {
@@ -415,26 +398,33 @@ module.exports.reserveBook = (req, res, next) => {
     }
 }
 
-module.exports.bookIssuedBy = (req, res, next) => {
+module.exports.reserveBook = (req, res, next) => {
     let body = req.body;
-    if (body && body.bookId) {
-        Book
-            .find({ id: body.bookId })
+    if (body && body.memberId && body.bookId && body.librarianId) {
+        Member
+            .updateOne({ id: body.memberId }, { reservedBooks: { $push: body.bookId } })
             .exec((error, response) => {
                 if (error) {
-
+                    console.log("Error while searching a member");
+                    res
+                        .status(404)
+                        .send({
+                            auth: false,
+                            message: "Error while searching a member",
+                            error: error
+                        });
                 } else {
-                    User
-                        .find({ id: { $in: response.copiesIssuedBy } })
-                        .exec((error2, response2) => {
-                            if (error2) {
-                                console.log("Error while searching the issued book");
+                    Librarian
+                        .updateOne({ id: body.librarianId }, { reservedNotification: { $push: { memberId: body.memberId, bookId: body.bookId } } })
+                        .exec((error, response2) => {
+                            if (error) {
+                                console.log("Error while searching a librarian");
                                 res
                                     .status(404)
                                     .send({
                                         auth: false,
-                                        message: "Error while searching the issued book",
-                                        error: error2
+                                        message: "Error while searching a librarian",
+                                        error: error
                                     });
                             } else {
                                 res
@@ -456,6 +446,165 @@ module.exports.bookIssuedBy = (req, res, next) => {
                 auht: false,
                 message: "Parameters are missing"
             });
+    }
+}
+
+module.exports.bookIsIssuedBy = (req, res, next) => {
+    let body = req.body;
+    if (body && body.librarianId && body.bookId) {
+        Librarian
+            .findOne({ id: body.librarianId })
+            .exec((error, response) => {
+                if (error) {
+                    console.log("Error while searching librarian data");
+                    res
+                        .status(404)
+                        .send({
+                            auth: false,
+                            message: "Error while searching librarian data",
+                            error: error
+                        });
+                } else {
+                    let members = [];
+                    response.issuedBooksInfo.find(element => {
+                        if (element.bookId == body.bookId) {
+                            members.push(element.memberId);
+                        }
+                    });
+                    Member
+                        .find({ id: { $in: members } }, { _id: 0, name: 1, id: 1 })
+                        .exec((error, response2) => {
+                            if (error) {
+                                console.log("Error while searching librarian data");
+                                res
+                                    .status(404)
+                                    .send({
+                                        auth: false,
+                                        message: "Error while searching librarian data",
+                                        error: error
+                                    });
+                            } else {
+                                res
+                                    .status(200)
+                                    .send({
+                                        auth: true,
+                                        message: "Members issued book found successfully",
+                                        response: response2
+                                    });
+                            }
+                        });
+                }
+            });
+    } else {
+        console.log("Parameters are missing");
+        res
+            .staus(404)
+            .send({
+                auht: false,
+                message: "Parameters are missing"
+            });
+    }
+}
+
+module.exports.bookIssuedByAMember = (req, res, next) => {
+    let body = req.body;
+    if (body && body.memberId) {
+        Member
+            .findOne({ id: body.memberId })
+            .exec((error, response) => {
+                if (error) {
+                    console.log("Error while searching librarian data");
+                    res
+                        .status(404)
+                        .send({
+                            auth: false,
+                            message: "Error while searching librarian data",
+                            error: error
+                        });
+                } else {
+                    Book
+                        .find({ id: { $in: response.booksIssued } }, { _id: 0, title: 1, author: 1, id: 1 })
+                        .exec((error, response2) => {
+                            if (error) {
+                                console.log("Error while searching librarian data");
+                                res
+                                    .status(404)
+                                    .send({
+                                        auth: false,
+                                        message: "Error while searching librarian data",
+                                        error: error
+                                    });
+                            } else {
+                                res
+                                    .status(200)
+                                    .send({
+                                        auth: true,
+                                        message: "All the issued books found successfully",
+                                        response: response2
+                                    });
+                            }
+                        });
+                }
+            });
+    } else {
+        console.log("Parameters are missing");
+        res
+            .staus(404)
+            .send({
+                auht: false,
+                message: "Parameters are missing"
+            });
+    }
+}
+
+module.exports.fine = (req, res, next) => {
+    let body = req.body;
+    if (body && body.bookId && body.memberId) {
+        Librarian
+            .find({ "issuedBooksInfo.bookId": body.bookId })
+            .exec((error, response) => {
+                if (error) {
+                    console.log("Error while searching librarian data");
+                    res
+                        .status(404)
+                        .send({
+                            auth: false,
+                            message: "Error while searching librarian data",
+                            error: error
+                        });
+                } else {
+                    if (new Date() > response.dueDate) {
+                        Member
+                            .findOne({ id: body.memberId }, { booksIssued: 1, _id: 0 })
+                            .exec((error, response) => {
+                                if (error) {
+                                    console.log("Error while searching member data");
+                                    res
+                                        .status(404)
+                                        .send({
+                                            auth: false,
+                                            message: "Error while searching member data",
+                                            error: error
+                                        });
+                                } else {
+                                    let booksIssued = [];
+                                    response.booksIssued.find(element => {
+                                        if (element == body.bookId) {
+                                            booksIssued.push(element);
+                                        }
+                                    });
+                                }
+                            });
+                    } else {
+                        res
+                            .status()
+                    }
+                }
+            });
+
+
+    } else {
+
     }
 }
 

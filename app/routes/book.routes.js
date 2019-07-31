@@ -44,8 +44,17 @@ router
     .post(bookCtrl.reserveBook);
 
 router
-    .route("/bookIssuedBy")
-    .post(bookCtrl.bookIssuedBy);
+    .route("/bookIsIssuedBy")
+    .post(bookCtrl.bookIsIssuedBy);
+
+
+router
+    .route("/bookIssuedByAMember")
+    .post(bookCtrl.bookIssuedByAMember);
+
+router
+    .route("/fine")
+    .post(bookCtrl.fine);
 // router
 // .route("/bookByName")
 // .post(bookCtrl.bookByName);

@@ -1,6 +1,19 @@
 const mongoose = require("mongoose");
 let schema = mongoose.Schema;
 
+let reservedNotificationSchema = new Schema({
+    memberId: String,
+    bookId: String
+});
+
+let issuedBookInfoSchema = new Schema({
+    bookId: String,
+    memberId: String,
+    issuingDate: Date,
+    dueDate: Date,
+    fine: Number
+});
+
 let librarianSchema = new schema({
     type: {
         type: String,
@@ -14,6 +27,8 @@ let librarianSchema = new schema({
         type: String,
         required: true
     },
+    issuedBooksInfo: [issuedBookInfoSchema],
+    reservedNotification: [reservedNotificationSchema]
     // address: {
     //     type: String,
     //     required: true

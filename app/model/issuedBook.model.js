@@ -20,10 +20,10 @@ let issuedBookSchema = new schema({
         type: Date,
         required: true
     },
-    id: {
-        type: String,
-        default: shortId.generate
-    }
+    // id: {
+    //     type: String,
+    //     default: shortId.generate
+    // }
 });
 
 module.exports = mongoose.model("IssuedBook", issuedBookSchema, "issuedBook");

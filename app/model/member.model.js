@@ -1,6 +1,11 @@
 const mongoose = require("mongoose");
 let schema = mongoose.Schema;
 
+let booksIssuedSchema = new schema({
+    bookId: String,
+
+});
+
 let MemberSchema = new schema({
     // type: {
     //     type: String,
@@ -23,7 +28,9 @@ let MemberSchema = new schema({
         tpye: Date,
         required: true
     },
-    booksIssuedId: [String],
+    // booksIssued: [booksIssuedSchema],
+    booksIssued: [String],
+    reservedBooks: [String],
     id:{
         type: String,
         required: true
