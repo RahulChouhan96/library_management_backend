@@ -18,8 +18,8 @@ let bookSchema = new schema({
     },
     category: {
         tpye: String,
-        required: true,
-        enum: ["science", "adventure", "maths"]
+        // required: true,
+        enum: ["Science", "Adventure", "Mathematics"]
     },
     id: {
         type: String,

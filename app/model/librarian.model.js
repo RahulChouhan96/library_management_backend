@@ -1,12 +1,18 @@
 const mongoose = require("mongoose");
 let schema = mongoose.Schema;
 
-let reservedNotificationSchema = new Schema({
+let reservedNotificationSchema = new schema({
     memberId: String,
     bookId: String
 });
 
-let issuedBookInfoSchema = new Schema({
+let reservedBooksSchema = new schema({
+    bookId: String,
+    memberId: String,
+    posted: Boolean
+});
+
+let issuedBookInfoSchema = new schema({
     bookId: String,
     memberId: String,
     issuingDate: Date,
@@ -28,7 +34,8 @@ let librarianSchema = new schema({
         required: true
     },
     issuedBooksInfo: [issuedBookInfoSchema],
-    reservedNotification: [reservedNotificationSchema]
+    reservedNotification: [reservedNotificationSchema],
+    reservedBooks: [reservedBooksSchema]
     // address: {
     //     type: String,
     //     required: true
@@ -40,4 +47,4 @@ let librarianSchema = new schema({
     // }
 });
 
-module.exports = mongoose.model("Library", librarianSchema, "library");
+module.exports = mongoose.model("Librarian", librarianSchema, "librarian");

@@ -6,6 +6,11 @@ let booksIssuedSchema = new schema({
 
 });
 
+let reservedBooksSchema = new schema({
+    bookId: String,
+    posted: Boolean
+});
+
 let MemberSchema = new schema({
     // type: {
     //     type: String,
@@ -25,12 +30,12 @@ let MemberSchema = new schema({
         required: true
     },
     joinDate: {
-        tpye: Date,
+        type: Date,
         required: true
     },
     // booksIssued: [booksIssuedSchema],
     booksIssued: [String],
-    reservedBooks: [String],
+    reservedBooks: [reservedBooksSchema],
     id:{
         type: String,
         required: true
@@ -47,4 +52,4 @@ let MemberSchema = new schema({
     // }
 });
 
-module.exports = mongoose.model("User", MemberSchema, "user");
+module.exports = mongoose.model("Member", MemberSchema, "member");

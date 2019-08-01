@@ -1,15 +1,14 @@
-const mongoose = reqiure("mongoose");
-const bcrypt = reqiure("bcrypt");
-const jwt = reqiure("jsonwebtoken");
-const shortId = reqiure("shortid");
+let mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const shortId = require("shortid");
 
 let INDEX = require("../model");
 
-let User = mongoose.model("User");
+let Member = mongoose.model("Member");
 let Admin = mongoose.model("Admin");
 let Librarian = mongoose.model("Librarian");
 
-let userTypes = ["member", "librarian", "admin"];
 
 module.exports.tokenValidator = (req, res, next) => {
     let token = req.headers["x-access-token"];
@@ -61,13 +60,13 @@ module.exports.memberRegister = (req, res, next) => {
             .save((error, response) => {
                 if (error) {
                     if (error.errmsg.includes("duplicate")) {
-                        console.log("User already exists with the given email");
+                        console.log("Member already exists with the given email");
                         console.log(error);
                         res
                             .status(404)
                             .send({
                                 "auth": false,
-                                "message": "User already exists with the given email",
+                                "message": "Member already exists with the given email",
                                 "error": error
                             });
                     } else {
@@ -82,12 +81,12 @@ module.exports.memberRegister = (req, res, next) => {
                             });
                     }
                 } else {
-                    console.log("User Profile added Successfully");
+                    console.log("Member Profile added Successfully");
                     res
                         .status(200)
                         .send({
                             "auth": true,
-                            "message": "User Profile added Successfully",
+                            "message": "Member Profile added Successfully",
                             "response": response
                         });
                 }
@@ -362,7 +361,7 @@ module.exports.adminLogin = (req, res, next) => {
                         .status(200)
                         .send({
                             "auth": true,
-                            "message": "User Logged-in Successfully",
+                            "message": "Member Logged-in Successfully",
                             "token": token,
                             "user": {
                                 name: response.name

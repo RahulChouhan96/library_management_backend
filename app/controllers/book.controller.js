@@ -5,8 +5,6 @@ let async = require("async");
 let Book = mongoose.model("Book");
 let Member = mongoose.model("Member");
 let Librarian = mongoose.model("Librarian");
-let IssuedBook = mongoose.model("IssuedBook");
-let ReservedBook = mongoose.model("ReservedBook");
 
 let categories = ["science", "adventure", "maths"];
 
@@ -56,12 +54,12 @@ module.exports.allBooksByCategory = (req, res, next) => {
 
 module.exports.suggestionsForTitle = (req, res, next) => {
     let body = req.body;
-    let bookTitles = [];
+    console.log(body);
     // bookNames = Book.aggregate([{$match: {
 
     // }}])
     Book
-        .find({}, { title: 1 })
+        .find({})
         .exec((error, response) => {
             if (error) {
                 console.log("Error while fetching book titles");
@@ -73,15 +71,19 @@ module.exports.suggestionsForTitle = (req, res, next) => {
                         error: error
                     });
             } else {
+                console.log("Suggestions found successfully");
+                let books = [];
                 response.find(element => {
-                    bookNames.push(element.title.includes(body.text));
+                    if (element.title.toLowerCase().includes(body.key.toLowerCase())) {
+                        books.push(element);
+                    }
                 });
                 res
                     .status(200)
                     .send({
                         auth: true,
                         message: "Suggestions found successfully",
-                        response: bookNames
+                        response: books
                     });
             }
         });
@@ -89,12 +91,9 @@ module.exports.suggestionsForTitle = (req, res, next) => {
 
 module.exports.suggestionsForAuthor = (req, res, next) => {
     let body = req.body;
-    let auhtors = [];
-    // bookNames = Book.aggregate([{$match: {
-
-    // }}])
+    console.log(body.key);
     Book
-        .find({}, { author: 1 })
+        .find({})
         .exec((error, response) => {
             if (error) {
                 console.log("Error while fetching book authors");
@@ -106,15 +105,20 @@ module.exports.suggestionsForAuthor = (req, res, next) => {
                         error: error
                     });
             } else {
+                // console.log(response);
+                let books = [];
                 response.find(element => {
-                    auhtors.push(element.author.includes(body.text));
+                    if (element.author.toLowerCase().includes(body.key.toLowerCase())) {
+                    books.push(element);
+                    }
                 });
+                // console.log(books);
                 res
                     .status(200)
                     .send({
                         auth: true,
                         message: "Suggestions found successfully",
-                        response: auhtors
+                        response: books
                     });
             }
         });
@@ -402,7 +406,7 @@ module.exports.reserveBook = (req, res, next) => {
     let body = req.body;
     if (body && body.memberId && body.bookId && body.librarianId) {
         Member
-            .updateOne({ id: body.memberId }, { reservedBooks: { $push: body.bookId } })
+            .updateOne({ id: body.memberId }, { reservedBooks: { $push: { bookId: body.bookId, posted: false } } })
             .exec((error, response) => {
                 if (error) {
                     console.log("Error while searching a member");
@@ -415,16 +419,16 @@ module.exports.reserveBook = (req, res, next) => {
                         });
                 } else {
                     Librarian
-                        .updateOne({ id: body.librarianId }, { reservedNotification: { $push: { memberId: body.memberId, bookId: body.bookId } } })
-                        .exec((error, response2) => {
-                            if (error) {
+                        .updateOne({ id: body.librarianId }, { reservedBooks: { $push: { memberId: body.memberId, bookId: body.bookId } } })
+                        .exec((error2, response2) => {
+                            if (error2) {
                                 console.log("Error while searching a librarian");
                                 res
                                     .status(404)
                                     .send({
                                         auth: false,
                                         message: "Error while searching a librarian",
-                                        error: error
+                                        error: error2
                                     });
                             } else {
                                 res
@@ -432,7 +436,7 @@ module.exports.reserveBook = (req, res, next) => {
                                     .send({
                                         auth: true,
                                         message: "Book reserved successfully",
-                                        response: response2
+                                        response: [response, response2]
                                     });
                             }
                         });
@@ -441,7 +445,7 @@ module.exports.reserveBook = (req, res, next) => {
     } else {
         console.log("Parameters are missing");
         res
-            .staus(404)
+            .status(404)
             .send({
                 auht: false,
                 message: "Parameters are missing"

@@ -1,8 +1,12 @@
+require("./app/model/db.connection");
+
 let express = require("express");
 let mongoose = require("mongoose");
 let bodyParser = require("body-parser");
 
 let authRoutes = require("./app/routes/auth.routes");
+let bookRoutes = require("./app/routes/book.routes");
+let notificationsRoutes = require("./app/routes/notifications.routes");
 
 const INDEX = require("./app/model");
 
@@ -18,6 +22,10 @@ app.use("/libraryManagement", authRoutes);
 
 app.use(bodyParser.urlencoded({extended:false}));
 app.use(bodyParser.json({type:"application/json"}));
+
+app.use("/libraryManagement", authRoutes);
+app.use("/libraryManagement", bookRoutes);
+app.use("/libraryManagement", notificationsRoutes);
 
 app.listen(INDEX.PORT, INDEX.HOST, (error, response)=>{
     if(error){
