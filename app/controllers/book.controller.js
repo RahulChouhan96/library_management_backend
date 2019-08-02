@@ -10,7 +10,7 @@ let categories = ["science", "adventure", "maths"];
 
 module.exports.allBooksByCategory = (req, res, next) => {
     Book
-        .find({}, { _id: 0, bookId: 0 })
+        .find({ category: { $in: categories } })
         .exec((error, response) => {
             if (error) {
                 console.log("Error while fetching books data");
@@ -22,32 +22,22 @@ module.exports.allBooksByCategory = (req, res, next) => {
                         error: error
                     });
             } else {
-                if (response.length <= 0) {
-                    console.log("No book data present");
-                    res
-                        .status(404)
-                        .send({
-                            auth: false,
-                            message: "No book data present",
-                        });
-                } else {
-                    let index = 0;
-                    let booksCategorised = [];
-                    while (index < categories.length) {
-                        booksCategorised[index] = {
-                            category: categories[index],
-                            books: Book.aggregate([{ $match: { category: categories[index] } }])
+                let books = [[]];
+                response.forEach(element => {
+                    let i = 0;
+                    while (i < categories.length) {
+                        if (element.category == categories[i]) {
+                            books[i].push(element);
                         }
-                        index++;
                     }
-                    res
-                        .status(200)
-                        .send({
-                            auth: true,
-                            message: "Books by category found successfully",
-                            response: booksCategorised
-                        });
-                }
+                });
+                res
+                    .status(200)
+                    .send({
+                        auth: true,
+                        message: "Books by category found successfully",
+                        response: books
+                    });
             }
         });
 }
@@ -109,7 +99,7 @@ module.exports.suggestionsForAuthor = (req, res, next) => {
                 let books = [];
                 response.find(element => {
                     if (element.author.toLowerCase().includes(body.key.toLowerCase())) {
-                    books.push(element);
+                        books.push(element);
                     }
                 });
                 // console.log(books);
@@ -553,7 +543,7 @@ module.exports.bookIssuedByAMember = (req, res, next) => {
     } else {
         console.log("Parameters are missing");
         res
-            .staus(404)
+            .status(404)
             .send({
                 auht: false,
                 message: "Parameters are missing"
